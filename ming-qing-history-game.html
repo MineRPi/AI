@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>明末清初 - AI历史互动游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #c9a961;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #c9a961;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #b8b8b8;
+            font-size: 1.1em;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .main-game {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid #c9a961;
+        }
+
+        .story-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 1.1em;
+            border-left: 4px solid #c9a961;
+        }
+
+        .story-text {
+            white-space: pre-wrap;
+            color: #f0f0f0;
+        }
+
+        .choices-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .choice-btn {
+            background: linear-gradient(135deg, #c9a961 0%, #a88840 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .choice-btn:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(201, 169, 97, 0.4);
+        }
+
+        .choice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #c9a961;
+        }
+
+        .panel h3 {
+            color: #c9a961;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #c9a961;
+            padding-bottom: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .stat-label {
+            color: #b8b8b8;
+        }
+
+        .stat-value {
+            color: #c9a961;
+            font-weight: bold;
+        }
+
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            color: #c9a961;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #c9a961;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #e0e0e0;
+            font-size: 0.95em;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(201, 169, 97, 0.5);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #c9a961 0%, #a88840 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(201, 169, 97, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(201, 169, 97, 0.3);
+            border-radius: 50%;
+            border-top-color: #c9a961;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .character-select {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .character-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #c9a961;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(201, 169, 97, 0.3);
+        }
+
+        .character-card.selected {
+            background: rgba(201, 169, 97, 0.2);
+            box-shadow: 0 0 20px rgba(201, 169, 97, 0.5);
+        }
+
+        .character-name {
+            color: #c9a961;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .character-desc {
+            font-size: 0.85em;
+            color: #b8b8b8;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .typing-indicator {
+            color: #c9a961;
+            font-style: italic;
+        }
+
+        .history-log {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid rgba(201, 169, 97, 0.3);
+            color: #b8b8b8;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c9a961;
+            border-radius: 4px;
+        }
+
+        .api-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .api-status.connected {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .api-status.disconnected {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏯 明末清初 🏯</h1>
+            <p class="subtitle">AI驱动的历史互动冒险游戏</p>
+        </header>
+
+        <div id="startScreen" class="panel">
+            <h3>选择你的角色</h3>
+            <p style="color: #b8b8b8; margin-bottom: 20px;">
+                公元1644年，明朝灭亡，清朝入关。在这个动荡的时代，你将扮演不同的角色，书写属于自己的历史篇章。
+            </p>
+            <div class="character-select">
+                <div class="character-card" data-character="scholar">
+                    <div class="character-name">📚 江南书生</div>
+                    <div class="character-desc">饱读诗书，心怀天下，在乱世中寻求救国之道</div>
+                </div>
+                <div class="character-card" data-character="general">
+                    <div class="character-name">⚔️ 明军将领</div>
+                    <div class="character-desc">统领残兵，誓死抗清，保卫大明江山</div>
+                </div>
+                <div class="character-card" data-character="merchant">
+                    <div class="character-name">💰 晋商巨贾</div>
+                    <div class="character-desc">富甲一方，在各方势力间周旋求存</div>
+                </div>
+                <div class="character-card" data-character="peasant">
+                    <div class="character-name">🌾 北方农民</div>
+                    <div class="character-desc">饱受战乱，只求家人平安，却被迫卷入历史洪流</div>
+                </div>
+                <div class="character-card" data-character="official">
+                    <div class="character-name">🏛️ 朝廷官员</div>
+                    <div class="character-desc">身居高位，面临忠君与保民的艰难抉择</div>
+                </div>
+                <div class="character-card" data-character="rebel">
+                    <div class="character-name">🔥 起义军领袖</div>
+                    <div class="character-desc">揭竿而起，反抗暴政，建立新秩序</div>
+                </div>
+            </div>
+            <button id="startGameBtn" class="btn" style="margin-top: 20px; width: 100%;" disabled>
+                开始游戏
+            </button>
+        </div>
+
+        <div id="gameScreen" class="game-layout hidden">
+            <div class="main-game">
+                <div class="story-area">
+                    <div id="storyText" class="story-text"></div>
+                </div>
+                <div id="choicesArea" class="choices-area"></div>
+            </div>
+
+            <div class="sidebar">
+                <div class="panel">
+                    <h3>📊 角色状态</h3>
+                    <div id="statsContainer">
+                        <div class="stat-item">
+                            <span class="stat-label">声望</span>
+                            <span id="reputationStat" class="stat-value">50</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">财富</span>
+                            <span id="wealthStat" class="stat-value">100</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">兵力</span>
+                            <span id="militaryStat" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">健康</span>
+                            <span id="healthStat" class="stat-value">100</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">年份</span>
+                            <span id="yearStat" class="stat-value">1644</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>⚙️ API配置</h3>
+                    <div id="apiStatus" class="api-status disconnected">未连接</div>
+                    <div class="config-form">
+                        <div class="form-group">
+                            <label for="apiProvider">API提供商</label>
+                            <select id="apiProvider">
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="qwen">通义千问</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="apiKey">API密钥</label>
+                            <input type="password" id="apiKey" placeholder="输入API密钥">
+                        </div>
+                        <div class="form-group">
+                            <label for="apiEndpoint">API端点 (可选)</label>
+                            <input type="text" id="apiEndpoint" placeholder="https://api.deepseek.com/v1">
+                        </div>
+                        <div class="form-group">
+                            <label for="modelName">模型名称</label>
+                            <input type="text" id="modelName" placeholder="deepseek-chat" value="deepseek-chat">
+                        </div>
+                        <button id="testApiBtn" class="btn btn-secondary">测试连接</button>
+                        <button id="saveConfigBtn" class="btn">保存配置</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📜 历史记录</h3>
+                    <div id="historyLog" class="history-log"></div>
+                </div>
+
+                <button id="restartBtn" class="btn btn-secondary" style="width: 100%;">重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const gameState = {
+            character: null,
+            currentStory: '',
+            stats: {
+                reputation: 50,
+                wealth: 100,
+                military: 0,
+                health: 100,
+                year: 1644
+            },
+            history: [],
+            apiConfig: {
+                provider: 'deepseek',
+                apiKey: '',
+                endpoint: '',
+                model: 'deepseek-chat'
+            }
+        };
+
+        // Character backgrounds
+        const characters = {
+            scholar: {
+                name: '江南书生',
+                background: '你是一位出身江南书香门第的读书人，自幼熟读四书五经，心怀济世之志。崇祯十七年（1644年），李自成攻破北京，崇祯帝自缢，随后清军入关。你目睹山河破碎，百姓流离失所，决定投身于这乱世之中...',
+                initialStats: { reputation: 60, wealth: 80, military: 0, health: 100 }
+            },
+            general: {
+                name: '明军将领',
+                background: '你是大明王朝的一名将领，驻守在山海关附近。手下还有三千残兵败将。北京城破的消息传来，军心涣散。清军虎视眈眈，李自成的部队也在逼近。你必须做出抉择：是投降、抵抗，还是另谋出路？',
+                initialStats: { reputation: 70, wealth: 50, military: 3000, health: 100 }
+            },
+            merchant: {
+                name: '晋商巨贾',
+                background: '你是山西有名的商人，经营票号和盐业，富甲一方。多年来与官府、军队都有往来。如今时局动荡，各方势力都需要资金支持。你可以在乱世中左右逢源，也可能成为各方争夺的目标...',
+                initialStats: { reputation: 50, wealth: 500, military: 100, health: 100 }
+            },
+            peasant: {
+                name: '北方农民',
+                background: '你是直隶省的一个普通农民，家有五口人。连年灾荒，加上官兵横征暴敛，生活苦不堪言。李自成的"均田免赋"口号让你看到了希望，但清军的到来又带来了新的变数...',
+                initialStats: { reputation: 30, wealth: 20, military: 0, health: 80 }
+            },
+            official: {
+                name: '朝廷官员',
+                background: '你是明朝的户部侍郎，身居要职。北京城破时，你侥幸逃脱，南下来到南京。弘光政权建立，但内部党争不断，外部清军压境。你必须在复杂的政治斗争中寻找生存之道...',
+                initialStats: { reputation: 80, wealth: 200, military: 500, health: 100 }
+            },
+            rebel: {
+                name: '起义军领袖',
+                background: '你是李自成麾下的一名将领，见证了大顺政权的兴衰。山海关一战失利后，你们节节败退。现在李自成已死，余部群龙无首。是继续抗清，还是归顺新朝？',
+                initialStats: { reputation: 65, wealth: 100, military: 5000, health: 100 }
+            }
+        };
+
+        // DOM Elements
+        const startScreen = document.getElementById('startScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const storyText = document.getElementById('storyText');
+        const choicesArea = document.getElementById('choicesArea');
+        const characterCards = document.querySelectorAll('.character-card');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const apiStatus = document.getElementById('apiStatus');
+        const testApiBtn = document.getElementById('testApiBtn');
+        const saveConfigBtn = document.getElementById('saveConfigBtn');
+        const historyLog = document.getElementById('historyLog');
+
+        // Initialize
+        let selectedCharacter = null;
+
+        characterCards.forEach(card => {
+            card.addEventListener('click', () => {
+                characterCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedCharacter = card.dataset.character;
+                startGameBtn.disabled = false;
+            });
+        });
+
+        startGameBtn.addEventListener('click', () => {
+            if (selectedCharacter) {
+                startGame(selectedCharacter);
+            }
+        });
+
+        restartBtn.addEventListener('click', () => {
+            gameScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            characterCards.forEach(c => c.classList.remove('selected'));
+            startGameBtn.disabled = true;
+            selectedCharacter = null;
+        });
+
+        function startGame(character) {
+            gameState.character = character;
+            gameState.stats = { ...characters[character].initialStats };
+            gameState.history = [];
+            
+            updateStats();
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            
+            // Generate opening story
+            generateStory(characters[character].background, true);
+        }
+
+        function updateStats() {
+            document.getElementById('reputationStat').textContent = gameState.stats.reputation;
+            document.getElementById('wealthStat').textContent = gameState.stats.wealth;
+            document.getElementById('militaryStat').textContent = gameState.stats.military;
+            document.getElementById('healthStat').textContent = gameState.stats.health;
+            document.getElementById('yearStat').textContent = gameState.stats.year;
+        }
+
+        function addHistoryEntry(text) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${gameState.stats.year}] ${text.substring(0, 50)}...`;
+            historyLog.insertBefore(entry, historyLog.firstChild);
+            gameState.history.push({ year: gameState.stats.year, text: text });
+        }
+
+        async function generateStory(context, isInitial = false) {
+            storyText.innerHTML = '<span class="typing-indicator">AI正在书写历史...</span>';
+            choicesArea.innerHTML = '';
+
+            const systemPrompt = `你是一位精通明末清初历史的叙事者，正在创造一个互动式历史冒险游戏。
+            
+背景设定：公元1644-1683年，明朝灭亡，清朝入关，这是一个动荡变革的时代。
+
+重要历史事件和人物包括：
+- 李自成起义、崇祯帝自缢
+- 吴三桂引清兵入关
+- 清军南下、扬州十日、嘉定三屠
+- 南明诸政权（弘光、隆武、永历）
+- 郑成功收复台湾
+- 康熙平定三藩
+
+请根据玩家的选择，创造符合历史背景的故事情节。故事应该：
+1. 具有历史真实感
+2. 提供道德困境和艰难选择
+3. 每个选择都会影响角色的命运
+4. 保持叙事的连贯性和吸引力
+5. 使用半文半白的语言风格，增强历史感
+
+当玩家做出选择后，请描述结果并提供3-4个新的选择。`;
+
+            const userPrompt = isInitial 
+                ? `玩家选择了角色：${characters[gameState.character].name}
+                
+背景故事：${context}
+
+请开始这个故事的第一章，描述主角的处境和面临的第一个重大抉择。在故事结尾，提供3-4个具体的行动选项，格式如下：
+
+【选项】
+1. [选项一]
+2. [选项二]
+3. [选项三]
+4. [选项四]`
+                : `当前状态：
+年份：${gameState.stats.year}
+声望：${gameState.stats.reputation}
+财富：${gameState.stats.wealth}
+兵力：${gameState.stats.military}
+健康：${gameState.stats.health}
+
+之前的故事：${gameState.history.slice(-2).map(h => h.text).join('\n')}
+
+当前情境：${context}
+
+请继续这个故事，描述发生的事情和结果。在故事结尾，提供3-4个新的行动选项，格式如下：
+
+【选项】
+1. [选项一]
+2. [选项二]
+3. [选项三]
+4. [选项四]`;
+
+            try {
+                const response = await callLLM(systemPrompt, userPrompt);
+                parseStoryResponse(response);
+                addHistoryEntry(context);
+            } catch (error) {
+                console.error('Error generating story:', error);
+                storyText.textContent = 'AI服务暂时不可用，请检查API配置。\n\n' + context;
+                provideDefaultChoices();
+            }
+        }
+
+        function parseStoryResponse(response) {
+            // Extract story and choices
+            const choiceMatch = response.match(/【选项】([\s\S]*?)(?:$|(?=\n\n))/);
+            let story = response;
+            let choices = [];
+
+            if (choiceMatch) {
+                story = response.split('【选项】')[0].trim();
+                const choicesText = choiceMatch[1];
+                choices = choicesText
+                    .split('\n')
+                    .filter(line => line.trim().match(/^\d+\./))
+                    .map(line => line.replace(/^\d+\.\s*/, '').trim())
+                    .filter(choice => choice.length > 0);
+            }
+
+            storyText.textContent = story;
+            
+            if (choices.length === 0) {
+                provideDefaultChoices();
+            } else {
+                choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = `${index + 1}. ${choice}`;
+                    btn.addEventListener('click', () => makeChoice(choice));
+                    choicesArea.appendChild(btn);
+                });
+            }
+        }
+
+        function provideDefaultChoices() {
+            const defaultChoices = [
+                '谨慎观察局势',
+                '寻求盟友支持',
+                '发展自身实力',
+                '改变当前策略'
+            ];
+
+            defaultChoices.forEach((choice, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = `${index + 1}. ${choice}`;
+                btn.addEventListener('click', () => makeChoice(choice));
+                choicesArea.appendChild(btn);
+            });
+        }
+
+        function makeChoice(choice) {
+            // Update stats based on choice (simplified logic)
+            const statChanges = {
+                '谨慎': { reputation: 5, wealth: 0, military: 0, health: 5 },
+                '寻求': { reputation: 10, wealth: -10, military: 5, health: 0 },
+                '发展': { reputation: 5, wealth: -20, military: 20, health: -5 },
+                '改变': { reputation: -5, wealth: 10, military: -10, health: 5 },
+                '抵抗': { reputation: 15, wealth: -30, military: -50, health: -10 },
+                '投降': { reputation: -20, wealth: 20, military: 0, health: 10 },
+                '逃亡': { reputation: -10, wealth: -50, military: -100, health: -5 },
+                '联合': { reputation: 10, wealth: -15, military: 30, health: 0 }
+            };
+
+            let changes = { reputation: 0, wealth: 0, military: 0, health: 0 };
+            for (const [key, value] of Object.entries(statChanges)) {
+                if (choice.includes(key)) {
+                    changes = value;
+                    break;
+                }
+            }
+
+            // Apply changes
+            gameState.stats.reputation = Math.max(0, Math.min(100, gameState.stats.reputation + changes.reputation));
+            gameState.stats.wealth = Math.max(0, gameState.stats.wealth + changes.wealth);
+            gameState.stats.military = Math.max(0, gameState.stats.military + changes.military);
+            gameState.stats.health = Math.max(0, Math.min(100, gameState.stats.health + changes.health));
+            
+            // Advance year randomly
+            if (Math.random() > 0.7) {
+                gameState.stats.year++;
+            }
+
+            updateStats();
+            generateStory(choice);
+        }
+
+        async function callLLM(systemPrompt, userPrompt) {
+            const config = gameState.apiConfig;
+            
+            let endpoint = config.endpoint;
+            if (!endpoint) {
+                switch(config.provider) {
+                    case 'deepseek':
+                        endpoint = 'https://api.deepseek.com/v1/chat/completions';
+                        break;
+                    case 'openai':
+                        endpoint = 'https://api.openai.com/v1/chat/completions';
+                        break;
+                    case 'qwen':
+                        endpoint = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+                        break;
+                    default:
+                        endpoint = 'https://api.deepseek.com/v1/chat/completions';
+                }
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${config.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: config.model,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.8,
+                    max_tokens: 1500
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'API request failed');
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // API Configuration
+        testApiBtn.addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const provider = document.getElementById('apiProvider').value;
+            const endpoint = document.getElementById('apiEndpoint').value;
+            const model = document.getElementById('modelName').value;
+
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+
+            gameState.apiConfig = {
+                provider,
+                apiKey,
+                endpoint,
+                model
+            };
+
+            testApiBtn.disabled = true;
+            testApiBtn.innerHTML = '<span class="loading"></span>测试中...';
+
+            try {
+                const testPrompt = '请用一句话介绍你自己';
+                await callLLM('你是一个助手', testPrompt);
+                apiStatus.className = 'api-status connected';
+                apiStatus.textContent = '✓ 连接成功';
+            } catch (error) {
+                apiStatus.className = 'api-status disconnected';
+                apiStatus.textContent = '✗ 连接失败：' + error.message;
+            } finally {
+                testApiBtn.disabled = false;
+                testApiBtn.textContent = '测试连接';
+            }
+        });
+
+        saveConfigBtn.addEventListener('click', () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const provider = document.getElementById('apiProvider').value;
+            const endpoint = document.getElementById('apiEndpoint').value;
+            const model = document.getElementById('modelName').value;
+
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+
+            gameState.apiConfig = {
+                provider,
+                apiKey,
+                endpoint,
+                model
+            };
+
+            // Save to localStorage
+            localStorage.setItem('mingQingGameConfig', JSON.stringify(gameState.apiConfig));
+            
+            alert('配置已保存！');
+            apiStatus.className = 'api-status connected';
+            apiStatus.textContent = '✓ 配置已保存';
+        });
+
+        // Load saved config
+        window.addEventListener('load', () => {
+            const savedConfig = localStorage.getItem('mingQingGameConfig');
+            if (savedConfig) {
+                try {
+                    gameState.apiConfig = JSON.parse(savedConfig);
+                    document.getElementById('apiProvider').value = gameState.apiConfig.provider;
+                    document.getElementById('apiKey').value = gameState.apiConfig.apiKey;
+                    document.getElementById('apiEndpoint').value = gameState.apiConfig.endpoint;
+                    document.getElementById('modelName').value = gameState.apiConfig.model;
+                } catch (e) {
+                    console.error('Failed to load config:', e);
+                }
+            }
+        });
+
+        // Provider change handler
+        document.getElementById('apiProvider').addEventListener('change', (e) => {
+            const provider = e.target.value;
+            const modelInput = document.getElementById('modelName');
+            const endpointInput = document.getElementById('apiEndpoint');
+
+            switch(provider) {
+                case 'deepseek':
+                    modelInput.value = 'deepseek-chat';
+                    endpointInput.value = 'https://api.deepseek.com/v1/chat/completions';
+                    break;
+                case 'openai':
+                    modelInput.value = 'gpt-3.5-turbo';
+                    endpointInput.value = 'https://api.openai.com/v1/chat/completions';
+                    break;
+                case 'qwen':
+                    modelInput.value = 'qwen-plus';
+                    endpointInput.value = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+                    break;
+                case 'custom':
+                    modelInput.value = '';
+                    endpointInput.value = '';
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
