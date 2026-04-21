@@ -359,6 +359,15 @@
                     <div id="storyText" class="story-text"></div>
                 </div>
                 <div id="choicesArea" class="choices-area"></div>
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #c9a961;">
+                    <div class="form-group" style="flex-direction: row; gap: 10px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label for="customAction" style="display: block; margin-bottom: 5px;">✍️ 自定义行动</label>
+                            <input type="text" id="customAction" placeholder="输入你想要做的事情..." style="width: 100%;">
+                        </div>
+                        <button id="customActionBtn" class="btn" style="white-space: nowrap;">执行</button>
+                    </div>
+                </div>
             </div>
 
             <div class="sidebar">
@@ -495,6 +504,8 @@
         const testApiBtn = document.getElementById('testApiBtn');
         const saveConfigBtn = document.getElementById('saveConfigBtn');
         const historyLog = document.getElementById('historyLog');
+        const customActionInput = document.getElementById('customAction');
+        const customActionBtn = document.getElementById('customActionBtn');
 
         // Initialize
         let selectedCharacter = null;
@@ -520,6 +531,26 @@
             characterCards.forEach(c => c.classList.remove('selected'));
             startGameBtn.disabled = true;
             selectedCharacter = null;
+        });
+
+        // Custom action button event listener
+        customActionBtn.addEventListener('click', () => {
+            const action = customActionInput.value.trim();
+            if (action) {
+                makeChoice(action);
+                customActionInput.value = '';
+            }
+        });
+
+        // Allow Enter key to submit custom action
+        customActionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const action = customActionInput.value.trim();
+                if (action) {
+                    makeChoice(action);
+                    customActionInput.value = '';
+                }
+            }
         });
 
         function startGame(character) {
